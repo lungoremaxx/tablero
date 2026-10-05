@@ -68,5 +68,13 @@ export function createSupabaseStore(url: string, anonKey: string): Store {
     async changePin(token, oldPin, newPin) {
       await rpc('change_pin', { p_token: token, p_old: oldPin, p_new: newPin })
     },
+
+    // La base manda una señal vacía en 'tablero-cambios' con cada cambio (ver schema.sql)
+    subscribe(onChange) {
+      const channel = db.channel('tablero-cambios')
+        .on('broadcast', { event: 'cambio' }, () => onChange())
+        .subscribe()
+      return () => { void db.removeChannel(channel) }
+    },
   }
 }

@@ -1,0 +1,25 @@
+name: Mantener activa la base
+
+# El plan gratis de Supabase pausa el proyecto tras 7 días sin uso.
+# Cada 3 días hace una consulta liviana (la lista de nombres) para evitarlo.
+on:
+  schedule:
+    - cron: '0 12 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Consultar la base
+        run: |
+          set -a; . ./.env; set +a
+          curl --fail --silent --show-error -X POST \
+            "$VITE_SUPABASE_URL/rest/v1/rpc/list_members" \
+            -H "apikey: $VITE_SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" -d '{}' > /dev/null
+          echo "Base activa"

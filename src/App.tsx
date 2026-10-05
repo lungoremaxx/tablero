@@ -94,14 +94,23 @@ export default function App() {
     }
   }, [session, logout, showToast])
 
-  // Carga inicial y refresco al volver a la app o cada minuto
+  // Carga inicial; después recarga al instante cuando otro celu cambia algo,
+  // al volver a la app y cada minuto por si se perdió alguna señal
   useEffect(() => {
     if (!session) return
     void reload()
+    let debounce: number | undefined
+    const soon = () => {
+      window.clearTimeout(debounce)
+      debounce = window.setTimeout(() => void reload(), 300)
+    }
+    const unsubscribe = store.subscribe(soon)
     const onVisible = () => { if (document.visibilityState === 'visible') void reload() }
     document.addEventListener('visibilitychange', onVisible)
     const timer = window.setInterval(onVisible, 60_000)
     return () => {
+      unsubscribe()
+      window.clearTimeout(debounce)
       document.removeEventListener('visibilitychange', onVisible)
       window.clearInterval(timer)
     }

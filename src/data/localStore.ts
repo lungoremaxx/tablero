@@ -139,4 +139,11 @@ export const localStore: Store = {
     data.pins[id] = newPin
     write(data)
   },
+
+  // En modo prueba, los cambios hechos en otra pestaña del mismo navegador
+  subscribe(onChange) {
+    const onStorage = (e: StorageEvent) => { if (e.key === KEY) onChange() }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  },
 }

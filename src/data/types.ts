@@ -59,4 +59,6 @@ export interface Store {
   setDone(token: string, id: string, done: boolean): Promise<Task>
   deleteTask(token: string, id: string): Promise<void>
   changePin(token: string, oldPin: string, newPin: string): Promise<void>
+  /** Llama a onChange cuando otro dispositivo cambia algo; devuelve cómo desuscribirse */
+  subscribe(onChange: () => void): () => void
 }

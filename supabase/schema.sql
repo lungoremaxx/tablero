@@ -219,3 +219,24 @@ revoke execute on function public.add_task(uuid, uuid, text, uuid, text, date, t
 revoke execute on function public.update_task(uuid, uuid, uuid, text, uuid, text, date, text) from authenticated;
 revoke execute on function public.set_done(uuid, uuid, boolean) from authenticated;
 revoke execute on function public.delete_task(uuid, uuid) from authenticated;
+
+-- ------------------------------------------------------------ Aviso en tiempo real
+-- Cada cambio en tareas o proyectos manda una señal vacía al canal público
+-- 'tablero-cambios'. La señal no lleva datos: los celus que la reciben recargan
+-- con su propia sesión.
+create or replace function public._avisar_cambio()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  perform realtime.send('{}'::jsonb, 'cambio', 'tablero-cambios', false);
+  return null;
+end $$;
+
+revoke all on function public._avisar_cambio() from public, anon, authenticated;
+
+drop trigger if exists avisar_cambio_tasks on public.tasks;
+create trigger avisar_cambio_tasks after insert or update or delete on public.tasks
+  for each statement execute function public._avisar_cambio();
+
+drop trigger if exists avisar_cambio_projects on public.projects;
+create trigger avisar_cambio_projects after insert or update or delete on public.projects
+  for each statement execute function public._avisar_cambio();
